@@ -72,12 +72,10 @@ public class DataPanel extends JPanel
 		{
 			public void actionPerformed(ActionEvent click)
 					{
-						String[] temp = baseController.getDataController().getMetaDataTitles();
-						for(String current : temp)
-						{
-							displayArea.setText(displayArea.getText() +"Column : " + current + "\n");
-						}
-						
+						JFrame popFrame = new JFrame();
+						popFrame.setSize(250, 250);
+						popFrame.setContentPane(new DynamicDataPanel(baseController, "books"));
+						popFrame.setVisible(true);
 					}
 		});
 		

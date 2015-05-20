@@ -16,7 +16,7 @@ public class DatabaseController
 	private long queryTime;
 	private long startTime;
 	private long endTime;
-	
+	private boolean isLocal;
 	public long getqueryTime()
 	{
 		return queryTime;
@@ -25,14 +25,28 @@ public class DatabaseController
 	public DatabaseController(DatabaseAppController baseController)
 	{
 		this.baseController = baseController;
-		this.connectionString ="jdbc:mysql://localhost/shin_megami_tensei?user=root";
+		this.connectionString ="jdbc:mysql://localhost";
 		queryTime = 0;
 		checkDriver();
 		setupConncetion();
+		isLocal = false;
+		if(connectionString.contains("LocalHost"))
+		{
+			isLocal = true;
+		}
 	}
 	public String getQuery()
 	{
 		return query;
+	}
+	
+	public void connectionStringBuilder(String pathToDBServer, String databaseName, String userName, String password)
+	{
+		connectionString = "jdbc:mysql://localhost";
+		connectionString += pathToDBServer;
+		connectionString += "/" + databaseName;
+		connectionString += "?user=" +userName;
+		connectionString += "&password=" + password;
 	}
 	private void checkDriver()
 	{
@@ -81,6 +95,9 @@ public class DatabaseController
 		try 
 		{
 
+			/**
+			 * One spot you can put the isLocal 
+			 */
 			Statement firstStatement = databaseConnection.createStatement();
 			ResultSet answers = firstStatement.executeQuery(query);
 			ResultSetMetaData answerData = answers.getMetaData();
@@ -133,7 +150,6 @@ public class DatabaseController
 	}
 	/**
 	 * Generic version of the select query method that will work with any database specified by the current connetionString value.
-	 * 
 	 * @param query
 	 * @return The 2D array of results from the select query 
 	 * @throws A SQLException if a potential data violation is detected in the supplied query
@@ -186,6 +202,25 @@ public class DatabaseController
 		return results;
 	}
 	
+	public void submitUpdateQuery(String query)
+	{
+		this.query = query;
+		long startTime = System.currentTimeMillis();
+		long endTime = 0;
+		try
+		{
+			Statement updateStatement = databaseConnection.createStatement();
+			updateStatement.executeUpdate(query);
+			endTime = System.currentTimeMillis();
+		}
+		catch(SQLException currentError)
+		{
+			endTime = System.currentTimeMillis();
+			displayErrors(currentError);
+		}
+		baseController.getQueryList().add(new QueryInfo(query, endTime - startTime));
+		
+	}
 	
 	
 	/**
@@ -240,7 +275,7 @@ public class DatabaseController
 	 */
 	public String displayTables()
 	{
-		String tableNames = "";
+		String tableNames = ""; 
 		String query = "SHOW TABLES";
 		long startTime, endTime;
 		startTime = System.currentTimeMillis();
@@ -345,5 +380,35 @@ public class DatabaseController
 			displayErrors(dropEror);
 		}
 	}
-
+	public String[] getDatabaseColumnNames(String tableName)
+	{
+		String[] columns;
+		query = "SELECT * FROM`"+ tableName + "`";
+		long startTime, endTime;
+		startTime = System.currentTimeMillis();
+		try
+		{
+			Statement firstStatement = databaseConnection.createStatement();
+			ResultSet answers = firstStatement.executeQuery(query);
+			ResultSetMetaData answerData = answers.getMetaData();
+			
+			columns = new String [answerData.getColumnCount()];
+			for(int column = 0; column < answerData.getColumnCount();column++)
+			{
+				columns[column] = answerData.getColumnName(column+1);
+			}
+			answers.close();
+			firstStatement.close();
+			endTime = System.currentTimeMillis();
+		}
+		catch(SQLException currentException)
+		{
+			endTime = System.currentTimeMillis();
+			columns = new String[] {"empty"};
+			displayErrors(currentException);
+		}
+		queryTime = endTime - startTime;
+		baseController.getQueryList().add(new QueryInfo(query, queryTime));
+		return columns;
+	}
 }

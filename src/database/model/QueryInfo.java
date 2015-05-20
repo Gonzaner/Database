@@ -4,6 +4,7 @@ import database.controller.DatabaseAppController;
 
 public class QueryInfo
 {
+	private boolean isLocal;
 	/**
 		the query being timed 
 	 */
@@ -22,6 +23,7 @@ public class QueryInfo
 	{
 		this.query = query;
 		this.queryTime = queryTime;
+		this.isLocal = isLocal;
 	}
 	
 	public QueryInfo(DatabaseAppController databaseAppController)
